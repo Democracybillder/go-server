@@ -1,0 +1,11 @@
+{
+    "Postgres":{
+        "Host":"localhost",
+        "User":"danielgrossman",
+        "Password":"",
+        "DBname":"billder",
+        "SSLmode":"disable"
+    },
+    "other":{
+    }
+}
