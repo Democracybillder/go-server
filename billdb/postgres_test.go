@@ -2,7 +2,6 @@ package billdb
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 	"time"
 
@@ -116,16 +115,16 @@ func (suite *BillTestSuite) TestGetBillsEmptyTerm() {
 // a normal test function and pass our suite to suite.Run
 func TestBillTestSuite(t *testing.T) {
 
-	cn, err := confer.GetConf("config.json")
+	cn, err := confer.GetConf("../config.json")
 	if err != nil {
-		fmt.Println("error configing:", err)
+		log.Error.Fatalf("Error with configing: %v\n", err)
 		return
 	}
 
-	db, err := dbsql.ConnectDB(&cn.Postgres)
+	db, err := dbsql.ConnectDB(cn.Postgres)
 	if err != nil {
 
-		fmt.Printf("Error connecting to db: %v\n", err)
+		log.Error.Fatalf("Error connecting to db: %v\n", err)
 		return
 	}
 

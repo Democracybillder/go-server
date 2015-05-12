@@ -2,12 +2,13 @@
 package billdb
 
 import (
-	"fmt"
-
 	"database/sql"
 
+	"github.com/Democracybillder/go-server/lib/logger"
 	_ "github.com/bmizerany/pq"
 )
+
+var log = logger.NewLog("Bill-DB")
 
 // Constructor method for BillDbPostgres, receives db connection and creates a db layer object
 func NewPostgres(db *sql.DB) BillDb {
@@ -20,9 +21,14 @@ type BillDbPostgres struct {
 
 // Returns a list of bill description dictionaries for a given term and US state.
 func (p *BillDbPostgres) getBillDescByTerm(state string, term string) ([]*BillDesc, error) {
-	const query = "SELECT bill_id, title, state, descr FROM bills WHERE state = $1 AND (title like $2 OR descr like $2 )"
+	const query = "SELECT bill_id, title, state, descr FROM bills WHERE lower(state) = $1 AND (lower(title) like $2 OR lower(descr) like $2 )"
 	term = "%" + term + "%"
 	rows, err := p.db.Query(query, state, term)
+	if err != nil {
+		log.Error.Printf("Error when retrieving bills by term: %v\n", err)
+		return nil, err
+	}
+
 	defer rows.Close()
 
 	billdescriptions := []*BillDesc{}
@@ -31,7 +37,7 @@ func (p *BillDbPostgres) getBillDescByTerm(state string, term string) ([]*BillDe
 		billdescription := &BillDesc{}
 		if err = rows.Scan(&billdescription.Id, &billdescription.Title, &billdescription.State, &billdescription.Description); err != nil {
 
-			fmt.Printf("Error when scanning rows: %v\n", err)
+			log.Error.Printf("Error when scanning rows: %v\n", err)
 			return nil, err
 		}
 		billdescriptions = append(billdescriptions, billdescription)
@@ -40,15 +46,23 @@ func (p *BillDbPostgres) getBillDescByTerm(state string, term string) ([]*BillDe
 	// Return an empty list if nothing returned by DB
 	if billdescriptions == nil {
 		billdescriptions = []*BillDesc{}
+	}
+	if err = rows.Err(); err != nil {
+		log.Error.Printf("Error when closing rows: %v\n", err)
+		return nil, err
 	}
 	return billdescriptions, nil
 }
 
 // Returns a list of all bill description dictionaries for given state.
 func (p *BillDbPostgres) getBillDescByState(state string) ([]*BillDesc, error) {
-	const query = "SELECT bill_id, title, state, descr FROM bills WHERE state = $1"
+	const query = "SELECT bill_id, title, state, descr FROM bills WHERE lower(state) = $1"
 
 	rows, err := p.db.Query(query, state)
+	if err != nil {
+		log.Error.Printf("Error when retrieving bills by state: %v\n", err)
+		return nil, err
+	}
 	defer rows.Close()
 
 	billdescriptions := []*BillDesc{}
@@ -57,7 +71,7 @@ func (p *BillDbPostgres) getBillDescByState(state string) ([]*BillDesc, error) {
 		billdescription := &BillDesc{}
 		if err = rows.Scan(&billdescription.Id, &billdescription.Title, &billdescription.State, &billdescription.Description); err != nil {
 
-			fmt.Printf("Error when scanning rows: %v\n", err)
+			log.Error.Printf("Error when scanning rows: %v\n", err)
 			return nil, err
 		}
 		billdescriptions = append(billdescriptions, billdescription)
@@ -66,6 +80,10 @@ func (p *BillDbPostgres) getBillDescByState(state string) ([]*BillDesc, error) {
 	// Return an empty list if nothing returned by DB
 	if billdescriptions == nil {
 		billdescriptions = []*BillDesc{}
+	}
+	if err = rows.Err(); err != nil {
+		log.Error.Printf("Error when closing rows: %v\n", err)
+		return nil, err
 	}
 	return billdescriptions, nil
 }
@@ -74,6 +92,10 @@ func (p *BillDbPostgres) getBillDescByState(state string) ([]*BillDesc, error) {
 func (p *BillDbPostgres) getBillLog(billId int) ([]*BillLog, error) {
 	const query = "SELECT status_date, status, last_action_date, last_action FROM bill_log WHERE bill_id = $1 ORDER BY last_action_date DESC"
 	rows, err := p.db.Query(query, billId)
+	if err != nil {
+		log.Error.Printf("Error when retrieving bill logs: %v\n", err)
+		return nil, err
+	}
 	defer rows.Close()
 
 	billLogs := []*BillLog{}
@@ -82,7 +104,7 @@ func (p *BillDbPostgres) getBillLog(billId int) ([]*BillLog, error) {
 		billLog := &BillLog{}
 		if err = rows.Scan(&billLog.StatusDate, &billLog.Status, &billLog.LastActionDate, &billLog.LastAction); err != nil {
 
-			fmt.Printf("Error when scanning rows: %v\n", err)
+			log.Error.Printf("Error when scanning rows: %v\n", err)
 			return nil, err
 		}
 		billLogs = append(billLogs, billLog)
@@ -92,6 +114,12 @@ func (p *BillDbPostgres) getBillLog(billId int) ([]*BillLog, error) {
 	if billLogs == nil {
 		billLogs = []*BillLog{}
 	}
+
+	if err = rows.Err(); err != nil {
+		log.Error.Printf("Error when closing rows: %v\n", err)
+		return nil, err
+	}
+
 	return billLogs, nil
 }
 

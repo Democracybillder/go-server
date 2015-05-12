@@ -2,12 +2,21 @@ package confer
 
 import (
 	"encoding/json"
-	"fmt"
+
+	"github.com/Democracybillder/go-server/lib/logger"
+
 	"os"
 )
 
+var log = logger.NewLog("Confer")
+
 type Conf struct {
-	Postgres PostgresConf
+	Postgres   PostgresConf
+	BillServer Server
+}
+
+type Server struct {
+	Port string
 }
 
 type PostgresConf struct {
@@ -24,7 +33,7 @@ func GetConf(path string) (*Conf, error) {
 	cnf := &Conf{}
 	err := decoder.Decode(cnf)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Error.Printf("Error decoding json config: %v\n", err)
 		return nil, err
 	}
 	return cnf, nil

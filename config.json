@@ -6,6 +6,7 @@
         "DBname":"billder",
         "SSLmode":"disable"
     },
-    "other":{
+    "BillServer":{
+    	"Port":"8080"
     }
 }
